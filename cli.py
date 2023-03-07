@@ -106,6 +106,13 @@ def main(argv):
 	if( ext == ".gz" ):
 		import gzip;
 		f = gzip.open(args["file"], "rb");
+	elif( ext == ".zip" ):
+		import zipfile;
+		with zipfile.ZipFile(args["file"], "r") as z:
+			for fi in z.filelist:
+				if( os.path.splitext(fi.filename)[1] == ".aarec" ):
+					f = z.open(fi, "r");
+					break;
 	else:
 		f = open(args["file"], "rb");
 	
