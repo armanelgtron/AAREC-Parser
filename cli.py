@@ -8,14 +8,16 @@ import time
 import json
 
 
+_MODE_TEST = 0;
 _MODE_STATS = 1;
 _MODE_SCORES = 2;
 _MODE_MESSAGES = 3;
 
 MODES_STR = {
+	"test": _MODE_TEST,
 	"stats": _MODE_STATS,
 	"score": _MODE_SCORES, "scores": _MODE_SCORES,
-	"messages": _MODE_MESSAGES,
+	"messages": _MODE_MESSAGES, "msg": _MODE_MESSAGES,
 };
 
 mode = 0;
@@ -49,8 +51,10 @@ class argumentsParse(argparse.ArgumentParser):
 		this.add_argument("file", metavar="FILE", type=str,
 			help="path to AAREC file");
 		
+		"""
 		this.add_argument("-o", "--out", dest="out",
 			help="output file");
+		"""
 		
 		this.add_argument("--human", dest="human", action="store_const", const=True,
 			help="use human-friendly output");
@@ -59,7 +63,7 @@ class argumentsParse(argparse.ArgumentParser):
 			help="use JSON output");
 		
 		this.add_argument("-m", "--mode", dest="mode", default=_MODE_SCORES,
-			help="the mode to use. stats|score");
+			help="the mode to use. test|stats|score|msg");
 		
 		this.add_argument("--show-percentage", dest="perc", action="store_true",
 			help="write the percentage of aarec read"
