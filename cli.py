@@ -64,6 +64,10 @@ class argumentsParse(argparse.ArgumentParser):
 		this.add_argument("--show-percentage", dest="perc", action="store_true",
 			help="write the percentage of aarec read"
 		);
+		
+		this.add_argument("--hide-percentage", dest="noperc", action="store_true",
+			help="inverse of show-percentage"
+		);
 	
 	def parse(this, argv):
 		return vars(this.parse_args(argv));
@@ -98,6 +102,8 @@ def main(argv):
 	
 	
 	showPercentage = args["perc"];
+	if( not showPercentage and not args["noperc"] and not jsonOutput ):
+		showPercentage = sys.stderr.isatty();
 	
 	f = None;
 	
@@ -122,6 +128,7 @@ def main(argv):
 	
 	if( showPercentage ):
 		print("Please wait...", end="", file=sys.stderr, flush=True);
+		f.seek(-4096, 2); # there should be a time event somewhere in the last 4K bytes, surely
 		endTimeState = seekGetLastAARECTime(f).time;
 		print("\033[1K", end="\r", file=sys.stderr, flush=True);
 		f.seek(0);
