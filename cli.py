@@ -49,7 +49,7 @@ class argumentsParse(argparse.ArgumentParser):
 			description="Parse AAREC Recordings to get information about and from them");
 		
 		this.add_argument("file", metavar="FILE", type=str,
-			help="path to AAREC file");
+			help="path to AAREC file. Currently supports .aarec (of course), .zip, and .gz");
 		
 		"""
 		this.add_argument("-o", "--out", dest="out",
