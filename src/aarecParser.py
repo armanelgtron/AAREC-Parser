@@ -98,7 +98,8 @@ def message_read(msg):
 	_len = ((nums[4]<<8)|nums[5])*2;
 	while(True):
 		#print(start, _len, file=sys.stderr);
-		yield message_parse(nums[start:]);
+		for x in message_parse(nums[start:]):
+			yield x;
 		start += _len+6;
 		if( (len(nums)-start) >= (_len+6) ):
 			_len = ((nums[start+4]<<8)|nums[start+5])*2;
@@ -127,9 +128,14 @@ def message_parse(nums):
 	if( msg.descriptor == 8 ): # console message
 		for con_raw in msg.getStr().split("\n"):
 			con = removeColors(con_raw);
+			if(not con): continue;
+			
+			if( state.consoleMessage is not None ):
+				yield state;
+				state = AARECState();
+			
 			state.consoleMessage = con;
 			state.consoleMessageRaw = con_raw;
-			if(not con): continue;
 			
 			"""
 			match = re.match(MSG_HAS_LOGGED_IN, con);
@@ -226,5 +232,5 @@ def message_parse(nums):
 	
 	#print(nums);
 	
-	return state;
+	yield state;
 

@@ -10,10 +10,12 @@ import json
 
 _MODE_STATS = 1;
 _MODE_SCORES = 2;
+_MODE_MESSAGES = 3;
 
 MODES_STR = {
 	"stats": _MODE_STATS,
 	"score": _MODE_SCORES, "scores": _MODE_SCORES,
+	"messages": _MODE_MESSAGES,
 };
 
 mode = 0;
@@ -122,6 +124,13 @@ def main(argv):
 		print(end="[");
 		dScoreOutp = False;
 	
+	if( mode == _MODE_STATS ):
+		stats = Stats();
+	
+	if( mode == _MODE_MESSAGES and jsonOutput ):
+		parser.error("JSON output is not supported for messages mode");
+		return;
+	
 	for state in parseAAREC(f):
 		if( showPercentage ):
 			stframe += 1;
@@ -137,6 +146,12 @@ def main(argv):
 				stats.chats += 1; p.stats.chats += 1;
 				if( chat.lower().find("lol") != -1 ):
 					stats.lols += 1; p.stats.lols += 1;
+		
+		if( mode == _MODE_MESSAGES ):
+			if( state.chatMessage ):
+				print( "[T="+str(state.time)+"]", state.chatMessage );
+			if( state.consoleMessage is not None ):
+				print( "[T="+str(state.time)+"]", state.consoleMessage );
 		
 		if( state.matchWinner ):
 			if( mode == _MODE_SCORES ):
@@ -204,6 +219,7 @@ def main(argv):
 		print("\n]");
 	
 	if( mode == _MODE_STATS ):
+		Stats.byPlayer["TOTAL"] = stats;
 		print(json.dumps({s: (Stats.byPlayer[s].__dict__) for s in Stats.byPlayer}, indent=2));
 	
 	
