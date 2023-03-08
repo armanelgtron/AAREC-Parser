@@ -3,6 +3,14 @@ Armagetron Advanced recording parser
 
 Parses aarec files to get information about them.
 
+Currently two seperate interface options are offered:
+
+gui.py interface
+----------------
+Requires PyQt, most tested with Qt 5.15 and 6.2.
+PySide may not work properly. WIP
+
+
 cli.py interface
 ----------------
 #### arguments ####
