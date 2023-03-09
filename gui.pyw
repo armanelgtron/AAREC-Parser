@@ -161,6 +161,7 @@ class Main(QtWidgets.QMainWindow):
 			this.thread = Qt.QThread();
 			this.worker = Worker(fileInfo[0]);
 			this.worker.moveToThread(this.thread);
+			this.worker.fatalError.connect(gui_exception);
 			this.thread.started.connect(this.worker.run);
 			
 			this.worker.status.connect(this.statusBar().showMessage);
@@ -253,6 +254,8 @@ class Worker(Qt.QObject):
 	message = Qt.Signal(float, str);
 	status = Qt.Signal(str);
 	scoreboard = Qt.Signal(dict);
+
+	fatalError = Qt.Signal(object, object, object);
 
 	def __init__(this, fileName):
 		super(Worker, this).__init__();
@@ -370,7 +373,18 @@ if(__name__ == "__main__"):
 	
 	def handle_exception(exc, val, tb):
 		sys.__excepthook__(exc, val, tb);
-		
+		if( app.instance().thread() == Qt.QThread.currentThread() ):
+			try:
+				window.thread.requestInterruption();
+			except:
+				pass;
+			gui_exception(exc, val, tb);
+		else:
+			window.worker.fatalError.emit(exc, val, tb);
+			time.sleep(1);
+			window.worker.finished.emit();
+	
+	def gui_exception(exc, val, tb):
 		import traceback;
 		msg = QtWidgets.QMessageBox();
 		msg.setIcon(QtWidgets.QMessageBox.Icon.Critical);
@@ -379,7 +393,7 @@ if(__name__ == "__main__"):
 		msg.setWindowTitle("Internal Error");
 		msg.exec();
 		
-		app.quit();
+		#app.quit();
 	
 	sys.excepthook = handle_exception;
 	
