@@ -33,7 +33,7 @@ def importPyQt(version=5,use_pyside=False):
 			from PyQt5 import QtCore as Qt;
 	elif(version == 4):
 		if(use_pyside):
-			from PyQt4 import QtGui as QtWidgets;
+			from PySide import QtGui as QtWidgets;
 			from PySide import QtUiTools;
 			from PySide import QtCore as Qt;
 		else:
@@ -47,6 +47,13 @@ def importPyQt(version=5,use_pyside=False):
 		QtWidgets.QMessageBox.Icon.Warning = QtWidgets.QMessageBox.Warning;
 		QtWidgets.QMessageBox.Icon.Critical = QtWidgets.QMessageBox.Critical;
 		QtWidgets.QMessageBox.Icon.Question = QtWidgets.QMessageBox.Question;
+	else:
+		for c in Qt.Qt.ContextMenuPolicy:
+			setattr(Qt.Qt,str(c).split(".")[1],c);
+	
+	if( ( use_pyside and version <= 5 ) or version < 5 ):
+		QtWidgets.QApplication.exec = QtWidgets.QApplication.exec_;
+		QtWidgets.QMenu.exec = QtWidgets.QMenu.exec_;
 	
 	if(use_pyside):
 		# basic uic implementation
@@ -77,13 +84,15 @@ qtImported = False;
 qtImportOverride = False;
 qtVersions = [5,6,4];
 
+qtCollectedErrors = [];
+
 if( not qtImportOverride ):
 	# try base PyQt
 	for v in qtVersions:
 		try:
 			importPyQt(v);
-		except ImportError:
-			pass;
+		except ImportError as exc:
+			qtCollectedErrors.append(exc);
 		else:
 			qtImported = True;
 			break;
@@ -93,8 +102,8 @@ if( not qtImportOverride ):
 		for v in qtVersions:
 			try:
 				importPyQt(v, True);
-			except ImportError:
-				pass;
+			except ImportError as exc:
+				qtCollectedErrors.append(exc);
 			else:
 				qtImported = True;
 				break;
@@ -104,9 +113,17 @@ if( not qtImported ):
 		"Error while loading PyQt",
 		"All attempts at loading PyQt have failed.",
 	];
+	errs = str(qtCollectedErrors);
 	
 	for l in error:
-		print(l);
+		print(l, file=sys.stderr);
+	
+	print(file=sys.stderr);
+	
+	print("Errors:", file=sys.stderr);
+	for e in qtCollectedErrors:
+		print(str(e), file=sys.stderr);
+	
 	try:
 		from tkinter import messagebox
 	except ImportError:
