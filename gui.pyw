@@ -157,6 +157,34 @@ except ImportError:
 	zipSupported = False;
 
 
+def colorCodeUsed(text):
+	return bool(re.search(REGEX_COLORS, text));
+
+def htmlColor(_str,
+	whiteIsRESETT=True,
+	colorStyle="background:black",
+	darkColorStyle="background:white",
+):
+	#return re.sub(REGEX_COLORS, r"<font color='#\1'>\2</font>", _str);
+	colors = re.findall(REGEX_COLORS, "0xRESETT"+_str);
+	out = "";
+	for c in colors:
+		if( c[0] == "RESETT" or ( whiteIsRESETT and c[0] == "ffffff" ) ):
+			out += html.escape(c[1]);
+		else:
+			cl = int(float.fromhex(c[0]));
+			r = (cl&0xff0000) / 0xff0000;
+			g = (cl&0x00ff00) / 0x00ff00;
+			b = (cl&0x0000ff) / 0x0000ff;
+			if( ( r < 0.5 and g < 0.5 and b < 0.5 ) or ( r+g+b < 0.7 ) ):
+				style = darkColorStyle;
+			else:
+				style = colorStyle;
+			#rgb"+str((int(r*255),int(g*255),int(b*255)))+"
+			out += "<font color='#"+c[0]+"' style='"+style+"'>"+html.escape(c[1])+"</font>";
+	return out;
+
+
 class Main(QtWidgets.QMainWindow):
 	def aarecOpen(this):
 		fileTypes = [
@@ -166,13 +194,14 @@ class Main(QtWidgets.QMainWindow):
 			"All Files (*.*)" # should always be last
 		];
 		fileInfo = QtWidgets.QFileDialog.getOpenFileName( this, "Load AAREC", "", str.join(";;", fileTypes) );
+		
 		if( fileInfo[0] ):
-			#if( isinstance(this.thread, Qt.QThread) and this.thread.isRunning() ):
-			if( this.progressBar.isVisible() ):
+			if( this.thread ):
 				this.thread.requestInterruption();
-				this.thread.wait(2000);
-				this.thread.terminate();
-			
+				this.thread.wait(1000);
+				if this.thread.isRunning():
+					raise TimeoutError("Timeout occurred when attempting to stop the thread.");
+					return;
 			this.setWindowTitle( os.path.basename(fileInfo[0])+" - "+this.progTitle );
 			
 			this.thread = Qt.QThread();
@@ -189,29 +218,41 @@ class Main(QtWidgets.QMainWindow):
 			
 			# prepare message log output
 			this.messages.setText("");
-			this.worker.message.connect(lambda time, msg: this.messages.append("["+str(time)+"] <span>"+html.escape(msg)+"</span>"));
+			# set color output background depending on color scheme
+			if( this.messages.palette().base().color().value() > 160 ):
+				def htmlColorCust(msg):
+					return htmlColor(msg,darkColorStyle="");
+			elif( this.messages.palette().base().color().value() < 96 ):
+				def htmlColorCust(msg):
+					return htmlColor(msg,colorStyle="");
+			else:
+				htmlColorCust = htmlColor;
+			this.worker.message.connect(lambda time, msg: this.messages.append("["+str(time)+"] <span>"+htmlColorCust(msg)+"</span>"));
 			
 			this.scoresBrowser.setText("");
 			def appendScoreBoard(data):
 				spectators = [];
 				
+				def TH(*text):
+					return E.TH(align="left", *text);
+				
 				teamScoreBoard = E.TABLE(E.TR( 
-					E.TH("Teamname"), E.TH("Score")
+					TH("Teamname"), TH("Score")
 				));
 				
 				playerScoreBoard = E.TABLE(E.TR(
-					E.TH("Player"), E.TH("Score"), E.TH("Team")
+					TH("Player"), TH("Score"), TH("Team")
 				));
 				
 				for t in data["teams"]:
 					teamScoreBoard.append(E.TR(
-						E.TD(t["name"]), E.TD(str(t["score"]))
+						E.TD(t["name"]), E.TD(str(t["score"]), align="right")
 					));
 				
 				for p in data["players"]:
 					if( p["team"] ):
 						playerScoreBoard.append(E.TR(
-							E.TD(p["name"]), E.TD(str(p["score"])), E.TD(p["team"])
+							E.TD(p["name"]), E.TD(str(p["score"]), align="right"), E.TD(p["team"])
 						));
 					else:
 						if( p["teamID"] ):
@@ -235,9 +276,14 @@ class Main(QtWidgets.QMainWindow):
 			
 			this.worker.finished.connect(this.thread.quit);
 			this.worker.finished.connect(this.worker.deleteLater);
-			this.thread.finished.connect(this.thread.deleteLater);
-			this.thread.finished.connect(this.progressBar.hide);
 			
+			def onFinish():
+				this.progressBar.hide();
+				this.thread.deleteLater();
+				this.thread=None;
+				#print(this.scoresBrowser.toHtml())
+			
+			this.thread.finished.connect(onFinish);
 			
 			this.thread.start();
 	
@@ -328,22 +374,20 @@ class Worker(Qt.QObject):
 			# show percentage
 			stframe += 1;
 			if( stframe%10000 == 0 ):
+				if( Qt.QThread.currentThread().isInterruptionRequested() ):
+					break;
+				
 				this.progress.emit(int(( 100 * state.time ) / endTimeState));
 				
 				if( ( time.time() - timeCalc ) > 1 ):
 					eta = round( ( ( time.time() - startTime ) * (endTimeState / state.time) ) - ( time.time() - startTime ) );
 					this.status.emit("Parsing... ETA: "+str(eta)+" seconds");
 					timeCalc = time.time();
-				
-			if( stframe%100000 == 0 ):
-				#print("check");
-				if( Qt.QThread.currentThread().isInterruptionRequested() ):
-					break;
 			
 			if( state.chatMessage is not None ):
 				
 				chat = state.chatMessage; p = state.player;
-				this.message.emit(state.time, state.chatMessage);
+				this.message.emit(state.time, state.chatMessageRaw);
 				
 				stats.chats += 1; p.stats.chats += 1;
 				if( chat.lower().find("lol") != -1 ):
@@ -351,7 +395,7 @@ class Worker(Qt.QObject):
 				
 				
 			if( state.consoleMessage is not None ):
-				this.message.emit(state.time, state.consoleMessage);
+				this.message.emit(state.time, state.consoleMessageRaw);
 			
 			
 			if( state.matchWinner ):
