@@ -279,6 +279,8 @@ class Worker(Qt.QObject):
 		objSetEngine(engine);
 		aarecSetEngine(engine);
 		
+		NetObj.objs.clear();
+		
 		
 		startTime = time.time();
 		
