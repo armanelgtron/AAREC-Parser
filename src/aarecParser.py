@@ -115,6 +115,17 @@ def message_parse(nums):
 	
 	state = AARECState();
 	
+	if( msg.descriptor == 5 ): # login
+		try: engine._lastLoginTime;
+		except: engine._lastLoginTime = 0;
+		if( state.time > engine._lastLoginTime+1 ):
+			engine._lastLoginTime = state.time;
+			# reset network state when we connect to a server
+			engine.players.clear();
+			engine.cycles.clear();
+			engine.teams.clear();
+			NetObj.objs.clear();
+	
 	if( msg.descriptor == 203 ): # chat message
 		playerID = msg.getShort();
 		p = NetObj.objs.get(playerID);
