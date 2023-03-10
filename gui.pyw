@@ -181,7 +181,7 @@ def htmlColor(_str,
 			else:
 				style = colorStyle;
 			#rgb"+str((int(r*255),int(g*255),int(b*255)))+"
-			out += "<font color='#"+c[0]+"' style='"+style+"'>"+html.escape(c[1])+"</font>";
+			out += "<font color='#"+c[0]+"' style='"+style+"'>"+html.escape(c[1]).replace("  ", " &nbsp;")+"</font>";
 	return out;
 
 
@@ -198,10 +198,24 @@ class Main(QtWidgets.QMainWindow):
 		if( fileInfo[0] ):
 			if( this.thread ):
 				this.thread.requestInterruption();
-				this.thread.wait(1000);
-				if this.thread.isRunning():
-					raise TimeoutError("Timeout occurred when attempting to stop the thread.");
-					return;
+				
+				if( not this.threadStop ):
+					this.threadStop = Qt.QTimer();
+					
+					def check():
+						if( not ( this.thread and this.thread.isRunning() ) ):
+							this.threadStop.stop();
+							this.threadStop = None;
+							this.aarecLoad( fileInfo );
+					
+					this.threadStop.timeout.connect(check);
+					
+					this.threadStop.start(1000);
+			else:
+				this.aarecLoad( fileInfo );
+	
+	def aarecLoad(this, fileInfo):
+		if( True ):
 			this.setWindowTitle( os.path.basename(fileInfo[0])+" - "+this.progTitle );
 			
 			this.thread = Qt.QThread();
@@ -295,6 +309,7 @@ class Main(QtWidgets.QMainWindow):
 		this.setWindowTitle(this.progTitle);
 		
 		this.thread = None;
+		this.threadStop = None;
 		
 		
 		this.progressBar.setValue(0);
@@ -365,6 +380,7 @@ class Worker(Qt.QObject):
 		f.seek(0);
 		
 		this.status.emit("Parsing...");
+		done = "Done.";
 		
 		stats = Stats();
 		
@@ -375,6 +391,7 @@ class Worker(Qt.QObject):
 			stframe += 1;
 			if( stframe%10000 == 0 ):
 				if( Qt.QThread.currentThread().isInterruptionRequested() ):
+					done = "Aborted.";
 					break;
 				
 				this.progress.emit(int(( 100 * state.time ) / endTimeState));
@@ -423,7 +440,7 @@ class Worker(Qt.QObject):
 		
 		f.close();
 		
-		this.status.emit("Done. Parsed in "+str(round( time.time() - startTime, 6 ))+" seconds. Recording is "+str(state.time)+" seconds long.");
+		this.status.emit(done+" Parsed in "+str(round( time.time() - startTime, 6 ))+" seconds. Recording is "+str(state.time)+" seconds long.");
 		
 		this.finished.emit();
 
