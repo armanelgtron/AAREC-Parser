@@ -207,17 +207,9 @@ def message_parse(nums):
 				del NetObj.objs[_id];
 	
 	
-	if( msg.descriptor == 201 ): # new player
+	if( msg.descriptor == 201 or msg.descriptor == 330 ): # new player
 		p = Player();
-		p.readNetInit(msg);
-		engine.players.append(p);
-		
-		state.obj = p;
-		state.objIsNew = True;
-	
-	if( msg.descriptor == 330 ): # new AI
-		p = Player();
-		p.AI = True;
+		p.isAI = ( msg.descriptor == 330 ); # new AI
 		p.readNetInit(msg);
 		engine.players.append(p);
 		
