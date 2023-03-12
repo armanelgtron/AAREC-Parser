@@ -7,8 +7,7 @@ Currently two seperate interface options are offered:
 
 gui.py interface
 ----------------
-Requires PyQt, most tested with Qt 5.15 and 6.2.
-PySide may not work properly. WIP
+Requires PyQt or PySide, most tested with PyQt 5.15 and 6.2. WIP
 
 
 cli.py interface

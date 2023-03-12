@@ -64,17 +64,20 @@ def importPyQt(version=5,use_pyside=False):
 				loader = QtUiTools.QUiLoader();
 				f = Qt.QFile(fileName);
 				f.open(Qt.QFile.ReadOnly);
-				gui = loader.load(fileName, widget);
+				gui = loader.load(fileName);
 				f.close();
-				widget.setCentralWidget(gui);
 				
 				# loop through all widgets and assign vars
 				def recurChildren(m):
 					for w in m.children():
-						print(w.objectName());
 						setattr(widget, w.objectName(), w);
 						recurChildren(w);
 				recurChildren(gui);
+				
+				widget.resize(gui.size());
+				gui.statusBar().hide();
+				
+				widget.setCentralWidget(gui);
 	else:
 		Qt.Signal = Qt.pyqtSignal;
 		Qt.Slot = Qt.pyqtSlot;
