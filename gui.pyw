@@ -64,7 +64,7 @@ def importPyQt(version=5,use_pyside=False):
 				loader = QtUiTools.QUiLoader();
 				f = Qt.QFile(fileName);
 				f.open(Qt.QFile.ReadOnly);
-				gui = loader.load(fileName);
+				gui = loader.load(f);
 				f.close();
 				
 				# loop through all widgets and assign vars
