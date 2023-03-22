@@ -86,6 +86,38 @@ def importPyQt(version=5,use_pyside=False):
 qtImported = False;
 qtImportOverride = False;
 qtVersions = [5,6,4];
+qtPrefPySide = False;
+
+
+import argparse;
+class argumentsParse(argparse.ArgumentParser):
+	def __init__(this):
+		argparse.ArgumentParser.__init__(this,
+			description="Parse AAREC Recordings to get information about and from them (GUI version)");
+		
+		this.add_argument("file", metavar="FILE", type=str, nargs='?',
+			help="path to AAREC file. Currently supports .aarec (of course), .zip, and .gz");
+		
+		this.add_argument("-qt", dest="qt", type=int,
+			#help="specify which version of qt to try to use");
+			help=argparse.SUPPRESS);
+		
+		this.add_argument("--use-pyside", dest="pyside", action="store_true",
+			#help="whether or not to try to use pyside instead of pyqt");
+			help=argparse.SUPPRESS);
+		
+	def parse(this, argv):
+		return vars(this.parse_args(argv));
+
+if( __name__ == "__main__" ):
+	parser = argumentsParse();
+	args = parser.parse(sys.argv[1:]);
+	
+	if( args["pyside"] is not None ):
+		qtPrefPySide = args["pyside"];
+	if( args["qt"] is not None ):
+		qtVersions = [ args["qt"] ];
+
 
 qtCollectedErrors = [];
 
@@ -93,7 +125,7 @@ if( not qtImportOverride ):
 	# try base PyQt
 	for v in qtVersions:
 		try:
-			importPyQt(v);
+			importPyQt( v, qtPrefPySide );
 		except ImportError as exc:
 			qtCollectedErrors.append(exc);
 		else:
@@ -104,7 +136,7 @@ if( not qtImportOverride ):
 	if( not qtImported ):
 		for v in qtVersions:
 			try:
-				importPyQt(v, True);
+				importPyQt( v, ( not qtPrefPySide ) );
 			except ImportError as exc:
 				qtCollectedErrors.append(exc);
 			else:
@@ -306,7 +338,7 @@ class Main(QtWidgets.QMainWindow):
 	
 	def __init__(this):
 		super(Main, this).__init__();
-		uic.loadUi("./gui/main.ui", this);
+		uic.loadUi( os.path.join( os.path.dirname(__file__), "gui", "main.ui" ), this );
 		
 		this.progTitle = "AAREC-Parser";
 		this.setWindowTitle(this.progTitle);
@@ -327,6 +359,15 @@ class Main(QtWidgets.QMainWindow):
 		this.actionOpen.triggered.connect( this.aarecOpen );
 		
 		this.show();
+		
+		
+		if( args["file"] is not None ):
+			loadFileSoon = Qt.QTimer();
+			loadFileSoon.setSingleShot( True );
+			print( args["file"] );
+			loadFileSoon.timeout.connect(lambda:this.aarecLoad( [ args["file"] ] ));
+			loadFileSoon.start(1);
+			this.loadFileSoon = loadFileSoon;
 
 
 class Worker(Qt.QObject):
