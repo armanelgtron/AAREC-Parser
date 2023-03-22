@@ -299,9 +299,12 @@ class Main(QtWidgets.QMainWindow):
 					));
 				
 				for p in data["players"]:
-					if( p["team"] ):
+					if( p["team"] or p["score"] ):
+						if( p["team"] ): team = str(p["team"]);
+						elif( p["teamID"] ): team = E.I("error");
+						else: team = E.I("spec");
 						playerScoreBoard.append(E.TR(
-							E.TD(p["name"]), E.TD(str(p["score"]), align="right"), E.TD(p["team"])
+							E.TD(p["name"]), E.TD(str(p["score"]), align="right"), E.TD( team )
 						));
 					else:
 						if( p["teamID"] ):
