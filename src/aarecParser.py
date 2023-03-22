@@ -106,7 +106,6 @@ def message_read(msg):
 		else:
 			break;
 
-gotIDs = False;
 
 def message_parse(nums):
 	msg = nMessage(nums);
@@ -114,6 +113,17 @@ def message_parse(nums):
 	#print(msg.descriptor, msg.id, msg.len, file=sys.stderr);
 	
 	state = AARECState();
+	
+	
+	try: u = engine.idsUsed[ msg.id ];
+	except KeyError: pass;
+	except AttributeError: engine.idsUsed = {};
+	else: 
+		if( state.time < u ):
+			return;
+	
+	engine.idsUsed[ msg.id ] = state.time + 4;
+	
 	
 	if( msg.descriptor == 5 ): # login
 		try: engine._lastLoginTime;
@@ -125,6 +135,7 @@ def message_parse(nums):
 			engine.cycles.clear();
 			engine.teams.clear();
 			NetObj.objs.clear();
+			engine.gotIDs = False;
 	
 	if( msg.descriptor == 203 ): # chat message
 		playerID = msg.getShort();
@@ -178,13 +189,14 @@ def message_parse(nums):
 	
 	
 	if( msg.descriptor == 20 ): #ongetid
-		global gotIDs;
-		if(not gotIDs):
+		try: engine.gotIDs;
+		except AttributeError: engine.gotIDs = False;
+		if( not engine.gotIDs ):
 			_id = msg.getShort()+(msg.getShort()-1);
 			p = Player(_id);
 			NetObj.objs[_id] = p;
 			engine.players.append(p);
-			gotIDs = True;
+			engine.gotIDs = True;
 	
 	
 	if( msg.descriptor == 24 ): # object sync
