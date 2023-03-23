@@ -104,6 +104,8 @@ def message_read(msg):
 		if( (len(nums)-start) >= (_len+6) ):
 			_len = ((nums[start+4]<<8)|nums[start+5])*2;
 		else:
+			for x in message_parse(nums[start:]):
+				yield x;
 			break;
 
 
