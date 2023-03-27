@@ -278,6 +278,9 @@ class Main(QtWidgets.QMainWindow):
 				htmlColorCust = htmlColor;
 			this.worker.message.connect(lambda time, msg: this.messages.append("["+str(time)+"] <span>"+htmlColorCust(msg)+"</span>"));
 			
+			sState = {};
+			sState["scoreRq"] = False;
+			
 			this.scoresBrowser.setText("");
 			def appendScoreBoard(data):
 				spectators = [];
@@ -312,6 +315,10 @@ class Main(QtWidgets.QMainWindow):
 						else:
 							spectators.append(p["name"]);
 				
+				if( sState["scoreRq"] ):
+					sState["scoreRq"] = False;
+					this.scoresBrowser.append("");
+				
 				this.scoresBrowser.append(getHTML(
 						E.DIV(
 							E.P("Time: "+str(data["time"])),
@@ -325,6 +332,18 @@ class Main(QtWidgets.QMainWindow):
 				this.scoresBrowser.append("");
 			this.worker.scoreboard.connect(appendScoreBoard);
 			
+			def scoreRq( time, type_, name, score ):
+				if( score and type_ != "Team" ):
+					this.scoresBrowser.append(getHTML(
+						(E.SPAN(
+							"[%s] %s %s left with %i points" % (
+								str(time), type_, name, score
+							), style="line-height:100%"
+						))
+					));
+					sState["scoreRq"] = True;
+			
+			this.worker.scoreRq.connect(scoreRq);
 			
 			this.worker.finished.connect(this.thread.quit);
 			this.worker.finished.connect(this.worker.deleteLater);
@@ -379,6 +398,7 @@ class Worker(Qt.QObject):
 	message = Qt.Signal(float, str);
 	status = Qt.Signal(str);
 	scoreboard = Qt.Signal(dict);
+	scoreRq = Qt.Signal(float, str, str, int);
 
 	fatalError = Qt.Signal(object, object, object);
 
@@ -461,6 +481,16 @@ class Worker(Qt.QObject):
 			if( state.consoleMessage is not None ):
 				this.message.emit(state.time, state.consoleMessageRaw);
 			
+			if( state.objIsDel ):
+				print( state.obj.__class__.__name__ );
+				try: state.obj.name; state.obj.score;
+				except AttributeError: pass;
+				else:
+					this.scoreRq.emit( 
+						state.time, 
+						state.obj.__class__.__name__, 
+						state.obj.name, state.obj.score,
+					);
 			
 			if( state.matchWinner ):
 				this.scoreboard.emit({

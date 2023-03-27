@@ -217,6 +217,12 @@ def message_parse(nums):
 				break;
 			
 			if( NetObj.objs.get(_id) ):
+				state.obj = NetObj.objs[_id];
+				state.objIsDel = True;
+				
+				yield state;
+				state = AARECState();
+				
 				NetObj.objs[_id].onDestroy();
 				del NetObj.objs[_id];
 	
