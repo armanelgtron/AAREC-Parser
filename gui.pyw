@@ -297,8 +297,12 @@ class Main(QtWidgets.QMainWindow):
 				));
 				
 				for t in data["teams"]:
+					name = t["name"]; score = str(t["score"]);
+					if( t["numPlayers"] <= 0 ):
+						name = E.S( t["name"] );
+						#score = E.S( score );
 					teamScoreBoard.append(E.TR(
-						E.TD(t["name"]), E.TD(str(t["score"]), align="right")
+						E.TD( name ), E.TD( score, align="right" )
 					));
 				
 				for p in data["players"]:
@@ -500,6 +504,7 @@ class Worker(Qt.QObject):
 						{
 							"name": t.name,
 							"score": t.score,
+							"numPlayers": sum( 1 for p in engine.players if p.teamID == t.id ),
 						}
 						for t in sorted(engine.teams, key=lambda t:t.score, reverse=True)
 					],
