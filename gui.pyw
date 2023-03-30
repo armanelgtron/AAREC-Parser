@@ -220,6 +220,20 @@ def htmlColor(_str,
 	return out;
 
 
+# based on https://stackoverflow.com/a/8735509
+def isValidForXML(ch):
+	c = ord(ch);
+	return (
+		0x20 <= c <= 0xD7FF or
+		0xE000 <= c <= 0xFFFD or
+		0x10000 <= c <= 0x10FFFF or
+		c in (0x9, 0xA, 0xD)
+	);
+
+def filterStr(s):
+	return str.join('', filter(isValidForXML, str(s)));
+
+
 class Main(QtWidgets.QMainWindow):
 	def aarecOpen(this):
 		fileTypes = [
@@ -297,9 +311,9 @@ class Main(QtWidgets.QMainWindow):
 				));
 				
 				for t in data["teams"]:
-					name = t["name"]; score = str(t["score"]);
+					name = filterStr( t["name"] ); score = str(t["score"]);
 					if( t["numPlayers"] <= 0 ):
-						name = E.S( t["name"] );
+						name = E.S( filterStr( t["name"] ) );
 						#score = E.S( score );
 					teamScoreBoard.append(E.TR(
 						E.TD( name ), E.TD( score, align="right" )
@@ -307,11 +321,11 @@ class Main(QtWidgets.QMainWindow):
 				
 				for p in data["players"]:
 					if( p["team"] or p["score"] ):
-						if( p["team"] ): team = str(p["team"]);
+						if( p["team"] ): team = filterStr(p["team"]);
 						elif( p["teamID"] ): team = E.I("error");
 						else: team = E.I("spec");
 						playerScoreBoard.append(E.TR(
-							E.TD(p["name"]), E.TD(str(p["score"]), align="right"), E.TD( team )
+							E.TD(filterStr(p["name"])), E.TD(str(p["score"]), align="right"), E.TD( team )
 						));
 					else:
 						if( p["teamID"] ):
@@ -326,10 +340,10 @@ class Main(QtWidgets.QMainWindow):
 				this.scoresBrowser.append(getHTML(
 						E.DIV(
 							E.P("Time: "+str(data["time"])),
-							E.P("Winner: "+str(data["winner"])),
+							E.P("Winner: "+filterStr(data["winner"])),
 							teamScoreBoard,
 							playerScoreBoard,
-							E.P("Spectators: "+str.join(", ", spectators)),
+							E.P("Spectators: "+filterStr(str.join(", ", spectators))),
 						)
 					)
 				);
@@ -341,7 +355,7 @@ class Main(QtWidgets.QMainWindow):
 					this.scoresBrowser.append(getHTML(
 						(E.SPAN(
 							"[%s] %s %s left with %i points" % (
-								str(time), type_, name, score
+								str(time), type_, filterStr(name), score
 							), style="line-height:100%"
 						))
 					));
