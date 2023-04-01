@@ -15,30 +15,30 @@ def getHTML(e):
 
 # function to deal with the various versions of PyQt and their differences
 def importPyQt(version=5,use_pyside=False):
-	global Qt, QtWidgets, uic;
+	global Qt, QtWidgets, QtGui, uic;
 	
 	if(version == 6):
 		if(use_pyside):
-			from PySide6 import QtWidgets, QtUiTools;
+			from PySide6 import QtWidgets, QtGui, QtUiTools;
 			from PySide6 import QtCore as Qt;
 		else:
-			from PyQt6 import QtWidgets, uic;
+			from PyQt6 import QtWidgets, QtGui, uic;
 			from PyQt6 import QtCore as Qt;
 	elif(version == 5):
 		if(use_pyside):
-			from PySide2 import QtWidgets, QtUiTools;
+			from PySide2 import QtWidgets, QtGui, QtUiTools;
 			from PySide2 import QtCore as Qt;
 		else:
-			from PyQt5 import QtWidgets, uic;
+			from PyQt5 import QtWidgets, QtGui, uic;
 			from PyQt5 import QtCore as Qt;
 	elif(version == 4):
 		if(use_pyside):
 			from PySide import QtGui as QtWidgets;
-			from PySide import QtUiTools;
+			from PySide import QtGui, QtUiTools;
 			from PySide import QtCore as Qt;
 		else:
 			from PyQt4 import QtGui as QtWidgets;
-			from PyQt4 import uic;
+			from PyQt4 import QtGui, uic;
 			from PyQt4 import QtCore as Qt;
 	
 	if( version < 6 ):
@@ -398,6 +398,20 @@ class Main(QtWidgets.QMainWindow):
 		
 		this.actionOpen.triggered.connect( this.aarecOpen );
 		
+		
+		this.actionFind = QtWidgets.QShortcut( QtGui.QKeySequence.Find, this, this.openFind );
+		
+		this.findHide.clicked.connect(this.findWidget.hide);
+		this.findText.textChanged.connect(lambda:this.find(begin=True))
+		this.findPrev.clicked.connect(lambda:this.find(prev=True, active=True));
+		this.findNext.clicked.connect(lambda:this.find(prev=False, active=True));
+		
+		this.findWidget.hide();
+		
+		this.cfgTextBrowser(this.messages);
+		this.cfgTextBrowser(this.scoresBrowser);
+		
+		
 		this.show();
 		
 		
@@ -408,6 +422,105 @@ class Main(QtWidgets.QMainWindow):
 			loadFileSoon.timeout.connect(lambda:this.aarecLoad( [ args["file"] ] ));
 			loadFileSoon.start(1);
 			this.loadFileSoon = loadFileSoon;
+	
+	def cfgTextBrowser(this, tb):
+		tb.setContextMenuPolicy(Qt.Qt.CustomContextMenu);
+		tb.customContextMenuRequested.connect(lambda e:this.textBrowserContextMenu(tb, e));
+	def textBrowserContextMenu(this, tb, e):
+		menu = tb.createStandardContextMenu();
+		menu.addSeparator();
+		find = menu.addAction("Find");
+		find.setShortcut( QtGui.QKeySequence(QtGui.QKeySequence.Find) );
+		a = menu.exec(tb.mapToGlobal(e));
+		if( a == find ):
+			this.openFind();
+	
+	def openFind(this):
+		this.findWidget.show();
+		this.findText.setFocus( Qt.Qt.OtherFocusReason );
+	
+	def find(this, begin=False, prev=False, active=False):
+		find = this.findText.text();
+		textBrowser = None;
+		options = QtGui.QTextDocument.FindFlag(0);
+		
+		if( prev ): options |= QtGui.QTextDocument.FindBackward;
+		if( this.caseSensitive.isChecked() ): options |= QtGui.QTextDocument.FindCaseSensitively;
+		
+		if( this.findOptions.currentIndex() == 1 ):
+			diacritic = "ŠŒŽšœžŸ¥µÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýÿ¡¿";
+			diacriticMap = ["S","OE","Z","s","oe","z","Y","Y","u","A","A","A","A","A","A","AE","C","E","E","E","E","I","I","I","I","D","N","O","O","O","O","O","O","U","U","U","U","Y","s","a","a","a","a","a","a","ae","c","e","e","e","e","i","i","i","i","o","n","o","o","o","o","o","o","u","u","u","u","y","y","!","?"];
+			
+			txt = re.escape(find);
+			new = "";
+			for c in txt:
+				i = 0; rg = [];
+				for x in range(diacriticMap.count( c )):
+					try:
+						l = diacriticMap.index( c, i );
+					except ValueError:
+						pass;
+					else:
+						rg.append(diacritic[l]);
+						i = l+1;
+				if( len(rg) == 0 ):
+					new += c;
+				else:
+					rg.insert(0, c);
+					new += "("+str.join("|", rg)+")";
+			
+			#print(new);
+			find = Qt.QRegularExpression( new );
+			
+		elif( this.findOptions.currentIndex() == 2 ):
+			options |= QtGui.QTextDocument.FindWholeWords;
+		elif( this.findOptions.currentIndex() == 3 ):
+			find = Qt.QRegularExpression( find );
+		
+		if( this.tabs.currentWidget() == this.scoresTab ):
+			textBrowser = this.scoresBrowser;
+		elif( this.tabs.currentWidget() == this.msgTab ):
+			textBrowser = this.messages;
+		
+		worked = False;
+		
+		if( textBrowser ):
+			if( begin ):
+				cur = textBrowser.textCursor()
+				cur.setPosition( cur.selectionStart() );
+				cur.movePosition(QtGui.QTextCursor.Left);
+				textBrowser.setTextCursor(cur);
+			worked = textBrowser.find( find, options );
+			if( ( not worked ) and ( begin or this.findWrap.isChecked() ) ):
+				cur = textBrowser.textCursor()
+				if( prev ):
+					cur.movePosition(QtGui.QTextCursor.End);
+				else:
+					cur.movePosition(QtGui.QTextCursor.Start);
+				textBrowser.setTextCursor(cur);
+				worked = textBrowser.find( find, options );
+			if( active ):
+				textBrowser.setFocus( Qt.Qt.OtherFocusReason );
+		
+		if( worked or ( this.findText.text() == "" ) ):
+			this.findText.setStyleSheet("");
+		else:
+			sel = textBrowser.textCursor().selectedText();
+			red = True;
+			if( isinstance(find, Qt.QRegularExpression) ):
+				#if( find.match(sel).hasMatch() ):
+				#	red = False;
+				flags = re.RegexFlag(0);
+				if( not this.caseSensitive.isChecked() ):
+					flags |= re.IGNORECASE;
+				if( re.match( find.pattern(), sel, flags ) ):
+					red = False;
+			elif( find == sel or ( not this.caseSensitive.isChecked() and find.lower() == sel.lower() ) ):
+				red = False;
+			if( red ):
+				this.findText.setStyleSheet("background:red");
+			else:
+				this.findText.setStyleSheet("background:#ff0");
 
 
 class Worker(Qt.QObject):
@@ -460,6 +573,8 @@ class Worker(Qt.QObject):
 		# get end time
 		f.seek(-4096, 2); # there should be a time event somewhere in the last 4K bytes, surely
 		endTimeState = seekGetLastAARECTime(this.f).time;
+		if( endTimeState == 0 ):
+			endTimeState = 0.0000001;
 		stframe = 0;
 		
 		f.seek(0);
