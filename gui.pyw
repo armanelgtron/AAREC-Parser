@@ -541,10 +541,6 @@ class Main(QtWidgets.QMainWindow):
 		else:
 			super().dragMoveEvent(e);
 	
-	def dragEvent(this, e):
-		if( not e.mimeData().hasUrls() ):
-			super().dragMoveEvent(e);
-	
 	def dropEvent(this, e):
 		if( e.mimeData().hasUrls() ):
 			this.aarecLoadSafe( [ e.mimeData().urls()[0].path() ] );
