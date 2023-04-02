@@ -245,6 +245,9 @@ class Main(QtWidgets.QMainWindow):
 		fileInfo = QtWidgets.QFileDialog.getOpenFileName( this, "Load AAREC", "", str.join(";;", fileTypes) );
 		
 		if( fileInfo[0] ):
+			aarecLoadSafe( fileInfo );
+	
+	def aarecLoadSafe(this, fileInfo):
 			if( this.thread ):
 				this.thread.requestInterruption();
 				
@@ -382,6 +385,8 @@ class Main(QtWidgets.QMainWindow):
 		
 		this.progTitle = "AAREC-Parser";
 		this.setWindowTitle(this.progTitle);
+		
+		this.setAcceptDrops(True);
 		
 		this.thread = None;
 		this.threadStop = None;
@@ -521,6 +526,28 @@ class Main(QtWidgets.QMainWindow):
 				this.findText.setStyleSheet("background:red");
 			else:
 				this.findText.setStyleSheet("background:#ff0");
+	
+	
+	def dragEnterEvent(this, e):
+		if( e.mimeData().hasUrls() ):
+			e.accept();
+		else:
+			super().dragEnterEvent(e);
+	
+	def dragMoveEvent(this, e):
+		if( e.mimeData().hasUrls() ):
+			e.setDropAction(Qt.Qt.CopyAction)
+			e.accept();
+		else:
+			super().dragMoveEvent(e);
+	
+	def dragEvent(this, e):
+		if( not e.mimeData().hasUrls() ):
+			super().dragMoveEvent(e);
+	
+	def dropEvent(this, e):
+		if( e.mimeData().hasUrls() ):
+			this.aarecLoadSafe( [ e.mimeData().urls()[0].path() ] );
 
 
 class Worker(Qt.QObject):
