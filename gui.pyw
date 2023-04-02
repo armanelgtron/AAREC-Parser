@@ -594,7 +594,11 @@ class Worker(Qt.QObject):
 		this.status.emit("Calculating...");
 		
 		# get end time
-		f.seek(-4096, 2); # there should be a time event somewhere in the last 4K bytes, surely
+		try:
+			# there should be a time event somewhere in the last 4K bytes, surely
+			f.seek(-4096, 2);
+		except OSError:
+			pass;
 		endTimeState = seekGetLastAARECTime(this.f).time;
 		if( endTimeState == 0 ):
 			endTimeState = 0.0000001;
