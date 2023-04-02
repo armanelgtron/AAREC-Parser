@@ -47,9 +47,11 @@ def importPyQt(version=5,use_pyside=False):
 		QtWidgets.QMessageBox.Icon.Warning = QtWidgets.QMessageBox.Warning;
 		QtWidgets.QMessageBox.Icon.Critical = QtWidgets.QMessageBox.Critical;
 		QtWidgets.QMessageBox.Icon.Question = QtWidgets.QMessageBox.Question;
+		Qt.DropAction = Qt.Qt;
 	else:
 		for c in Qt.Qt.ContextMenuPolicy:
 			setattr(Qt.Qt,str(c).split(".")[1],c);
+		Qt.DropAction = Qt.Qt.DropAction;
 	
 	if( ( use_pyside and version <= 5 ) or version < 5 ):
 		QtWidgets.QApplication.exec = QtWidgets.QApplication.exec_;
@@ -129,7 +131,7 @@ if( not qtImportOverride ):
 		except ImportError as exc:
 			qtCollectedErrors.append(exc);
 		else:
-			qtImported = True;
+			qtImported = v;
 			break;
 
 	# try again, but try PySide instead
@@ -140,7 +142,7 @@ if( not qtImportOverride ):
 			except ImportError as exc:
 				qtCollectedErrors.append(exc);
 			else:
-				qtImported = True;
+				qtImported = v;
 				break;
 
 if( not qtImported ):
@@ -404,7 +406,10 @@ class Main(QtWidgets.QMainWindow):
 		this.actionOpen.triggered.connect( this.aarecOpen );
 		
 		
-		this.actionFind = QtWidgets.QShortcut( QtGui.QKeySequence.Find, this, this.openFind );
+		if( qtImported >= 6 ):
+			this.actionFind = QtGui.QShortcut( QtGui.QKeySequence.StandardKey.Find, this, this.openFind );
+		else:
+			this.actionFind = QtWidgets.QShortcut( QtGui.QKeySequence.Find, this, this.openFind );
 		
 		this.findHide.clicked.connect(this.findWidget.hide);
 		this.findText.textChanged.connect(lambda:this.find(begin=True))
@@ -536,7 +541,7 @@ class Main(QtWidgets.QMainWindow):
 	
 	def dragMoveEvent(this, e):
 		if( e.mimeData().hasUrls() ):
-			e.setDropAction(Qt.Qt.CopyAction)
+			e.setDropAction(Qt.DropAction.CopyAction)
 			e.accept();
 		else:
 			super().dragMoveEvent(e);
