@@ -52,6 +52,9 @@ def importPyQt(version=5,use_pyside=False):
 		for c in Qt.Qt.ContextMenuPolicy:
 			setattr(Qt.Qt,str(c).split(".")[1],c);
 		Qt.DropAction = Qt.Qt.DropAction;
+		for x in ( QtGui.QTextCursor.MoveOperation, QtGui.QTextCursor.SelectionType ):
+			for c in x:
+				setattr(QtGui.QTextCursor,str(c).split(".")[1],c);
 	
 	if( ( use_pyside and version <= 5 ) or version < 5 ):
 		QtWidgets.QApplication.exec = QtWidgets.QApplication.exec_;
@@ -357,6 +360,14 @@ class Main(QtWidgets.QMainWindow):
 			
 			def scoreRq( time, type_, name, score ):
 				if( score and type_ != "Team" ):
+					old = this.scoresBrowser.textCursor();
+					cur = this.scoresBrowser.textCursor();
+					cur.movePosition( QtGui.QTextCursor.Start );
+					cur.movePosition( QtGui.QTextCursor.NextBlock );
+					cur.movePosition( QtGui.QTextCursor.NextBlock );
+					cur.select( QtGui.QTextCursor.LineUnderCursor );
+					this.scoresBrowser.setTextCursor(cur);
+					
 					this.scoresBrowser.append(getHTML(
 						(E.SPAN(
 							"[%s] %s %s left with %i points" % (
@@ -364,6 +375,8 @@ class Main(QtWidgets.QMainWindow):
 							), style="line-height:100%"
 						))
 					));
+					
+					this.scoresBrowser.setTextCursor(old);
 					sState["scoreRq"] = True;
 			
 			this.worker.scoreRq.connect(scoreRq);
