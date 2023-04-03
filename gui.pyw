@@ -41,6 +41,9 @@ def importPyQt(version=5,use_pyside=False):
 			from PyQt4 import QtGui, uic;
 			from PyQt4 import QtCore as Qt;
 	
+	class Q:
+		pass;
+	
 	if( version < 6 ):
 		QtWidgets.QMessageBox.Icon.NoIcon = QtWidgets.QMessageBox.NoIcon;
 		QtWidgets.QMessageBox.Icon.Information = QtWidgets.QMessageBox.Information;
@@ -48,6 +51,11 @@ def importPyQt(version=5,use_pyside=False):
 		QtWidgets.QMessageBox.Icon.Critical = QtWidgets.QMessageBox.Critical;
 		QtWidgets.QMessageBox.Icon.Question = QtWidgets.QMessageBox.Question;
 		Qt.DropAction = Qt.Qt;
+		Qt.FocusReason = Q();
+		for c in Qt.Qt.__dict__:
+			x = re.findall( "(.+)FocusReason", c );
+			if( len(x) != 0 ):
+				setattr( Qt.FocusReason, x[0], getattr(Qt.Qt, c) );
 	else:
 		for c in Qt.Qt.ContextMenuPolicy:
 			setattr(Qt.Qt,str(c).split(".")[1],c);
@@ -55,6 +63,11 @@ def importPyQt(version=5,use_pyside=False):
 		for x in ( QtGui.QTextCursor.MoveOperation, QtGui.QTextCursor.SelectionType ):
 			for c in x:
 				setattr(QtGui.QTextCursor,str(c).split(".")[1],c);
+		Qt.FocusReason = Qt.Qt.FocusReason;
+		for c in dict(Qt.Qt.FocusReason.__dict__):
+			x = re.findall( "(.+)FocusReason", c );
+			if( len(x) != 0 ):
+				setattr( Qt.FocusReason, x[0], getattr(Qt.FocusReason, c) );
 	
 	if( ( use_pyside and version <= 5 ) or version < 5 ):
 		QtWidgets.QApplication.exec = QtWidgets.QApplication.exec_;
@@ -460,7 +473,7 @@ class Main(QtWidgets.QMainWindow):
 	
 	def openFind(this):
 		this.findWidget.show();
-		this.findText.setFocus( Qt.Qt.OtherFocusReason );
+		this.findText.setFocus( Qt.FocusReason.Other );
 	
 	def find(this, begin=False, prev=False, active=False):
 		find = this.findText.text();
