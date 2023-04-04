@@ -1,11 +1,16 @@
 #!/usr/bin/python3
+# -*- coding: utf-8 -*-
 
+from __future__ import print_function, division, absolute_import;
 
 import sys, os;
 import ctypes;
 import re;
 import time
-import html;
+try:
+	import html;
+except ImportError:
+	import xml.sax.saxutils as html;
 
 import lxml;
 from lxml.html import builder as E;
@@ -71,9 +76,16 @@ def importPyQt(version=5,use_pyside=False):
 				setattr( Qt.FocusReason, x[0], getattr(Qt.FocusReason, c) );
 		Qt.Orientation = Qt.Qt.Orientation;
 	
-	if( ( use_pyside and version <= 5 ) or version < 5 ):
-		QtWidgets.QApplication.exec = QtWidgets.QApplication.exec_;
-		QtWidgets.QMenu.exec = QtWidgets.QMenu.exec_;
+	if( version >= 6 ):
+		if( sys.version_info.major > 2 ):
+			eval('exec("QtWidgets.QApplication.exec_ = QtWidgets.QApplication.exec")');
+			eval('exec("QtWidgets.QMenu.exec_ = QtWidgets.QMenu.exec")');
+	
+	if( version <= 4 ):
+		Qt.QString.find = lambda t, s: str(t).find(s);
+		Qt.QString.rfind = lambda t, s: str(t).rfind(s);
+		Qt.QString.lfind = lambda t, s: str(t).lfind(s);
+		Qt.QThread.isInterruptionRequested = lambda t: False;
 	
 	if(use_pyside):
 		# basic uic implementation
@@ -227,7 +239,7 @@ def htmlColor(_str,
 		if( c[0] == "RESETT" or ( whiteIsRESETT and c[0] == "ffffff" ) ):
 			out += html.escape(c[1]);
 		else:
-			cl = int(float.fromhex(c[0]));
+			cl = int(float.fromhex(str(c[0])));
 			r = (cl&0xff0000) / 0xff0000;
 			g = (cl&0x00ff00) / 0x00ff00;
 			b = (cl&0x0000ff) / 0x0000ff;
@@ -471,7 +483,7 @@ class Main(QtWidgets.QMainWindow):
 		menu.addSeparator();
 		find = menu.addAction("Find");
 		find.setShortcut( QtGui.QKeySequence(QtGui.QKeySequence.Find) );
-		a = menu.exec(tb.mapToGlobal(e));
+		a = menu.exec_(tb.mapToGlobal(e));
 		if( a == find ):
 			this.openFind();
 	
@@ -672,7 +684,7 @@ class Worker(Qt.QObject):
 				
 				if( ( time.time() - timeCalc ) > 1 ):
 					eta = round( ( ( time.time() - startTime ) * (endTimeState / state.time) ) - ( time.time() - startTime ) );
-					this.status.emit("Parsing... ETA: "+str(eta)+" seconds");
+					this.status.emit("Parsing... ETA: "+str(int(eta))+" seconds");
 					timeCalc = time.time();
 			
 			if( state.chatMessage is not None ):
@@ -757,10 +769,10 @@ if(__name__ == "__main__"):
 		msg.setText("<b>An internal error occurred.</b> <br /> This is probably a bug, please send a bug report.");
 		msg.setInformativeText(str.join("\n", traceback.format_exception(exc, val, tb)));
 		msg.setWindowTitle("Internal Error");
-		msg.exec();
+		msg.exec_();
 		
 		#app.quit();
 	
 	sys.excepthook = handle_exception;
 	
-	app.exec();
+	app.exec_();

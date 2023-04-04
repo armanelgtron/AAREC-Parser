@@ -67,7 +67,7 @@ class nMessage:
 		return this.getString();
 	
 	def getString(this):
-		_len = math.ceil(this.getShort()/2);
+		_len = int( math.ceil(this.getShort()/2) );
 		c1, c2 = 0, 0; _str="";
 		for i in range(_len):
 			c2 = this.getChar(); c1 = this.getChar();

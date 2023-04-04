@@ -133,10 +133,17 @@ def message_parse(nums):
 		if( state.time > engine._lastLoginTime+1 ):
 			engine._lastLoginTime = state.time;
 			# reset network state when we connect to a server
-			engine.players.clear();
-			engine.cycles.clear();
-			engine.teams.clear();
-			NetObj.objs.clear();
+			try: list.clear;
+			except AttributeError:
+				while( len(engine.players) > 0 ): engine.players.pop();
+				while( len(engine.cycles) > 0 ): engine.cycles.pop();
+				while( len(engine.teams) > 0 ): engine.teams.pop();
+				while( len(NetObj.objs) > 0 ): NetObj.objs.pop();
+			else:
+				engine.players.clear();
+				engine.cycles.clear();
+				engine.teams.clear();
+				NetObj.objs.clear();
 			engine.gotIDs = False;
 	
 	if( msg.descriptor == 203 ): # chat message
@@ -177,16 +184,16 @@ def message_parse(nums):
 			#print(cen, file=sys.stderr);
 			state.centerMessage = cen;
 			state.centerMessageRaw = cen_raw;
-			match = re.match(CEN_MATCH_WINNER, cen);
+			match = re.findall(CEN_MATCH_WINNER, cen);
 			if( match ):
 				for t in engine.teams:
-					if( removeColors(t.name) == match[1] ):
+					if( removeColors(t.name) == match[0] ):
 						state.matchWinner = t;
 			
-			match = re.match(CEN_ROUND_WINNER, cen);
+			match = re.findall(CEN_ROUND_WINNER, cen);
 			if( match ):
 				for t in engine.teams:
-					if( removeColors(t.name) == match[1] ):
+					if( removeColors(t.name) == match[0] ):
 						state.roundWinner = t;
 	
 	
