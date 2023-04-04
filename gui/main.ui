@@ -60,6 +60,9 @@
         </property>
         <item row="0" column="0">
          <widget class="QTextBrowser" name="scoresBrowser">
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
           <property name="verticalScrollBarPolicy">
            <enum>Qt::ScrollBarAlwaysOn</enum>
           </property>
@@ -162,6 +165,9 @@
             <family>Monospace</family>
            </font>
           </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
          </widget>
         </item>
        </layout>
@@ -233,7 +239,8 @@
           <string>Next Match</string>
          </property>
          <property name="icon">
-          <iconset theme="down"/>
+          <iconset theme="down">
+           <normaloff>.</normaloff>.</iconset>
          </property>
          <property name="flat">
           <bool>true</bool>
@@ -252,7 +259,8 @@
           <string>Previous Match</string>
          </property>
          <property name="icon">
-          <iconset theme="up"/>
+          <iconset theme="up">
+           <normaloff>.</normaloff>.</iconset>
          </property>
          <property name="flat">
           <bool>true</bool>
@@ -330,7 +338,8 @@
           </size>
          </property>
          <property name="icon">
-          <iconset theme="window-close"/>
+          <iconset theme="window-close">
+           <normaloff>.</normaloff>.</iconset>
          </property>
          <property name="flat">
           <bool>true</bool>

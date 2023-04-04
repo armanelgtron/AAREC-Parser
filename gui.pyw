@@ -56,6 +56,7 @@ def importPyQt(version=5,use_pyside=False):
 			x = re.findall( "(.+)FocusReason", c );
 			if( len(x) != 0 ):
 				setattr( Qt.FocusReason, x[0], getattr(Qt.Qt, c) );
+		Qt.Orientation = Qt.Qt;
 	else:
 		for c in Qt.Qt.ContextMenuPolicy:
 			setattr(Qt.Qt,str(c).split(".")[1],c);
@@ -68,6 +69,7 @@ def importPyQt(version=5,use_pyside=False):
 			x = re.findall( "(.+)FocusReason", c );
 			if( len(x) != 0 ):
 				setattr( Qt.FocusReason, x[0], getattr(Qt.FocusReason, c) );
+		Qt.Orientation = Qt.Qt.Orientation;
 	
 	if( ( use_pyside and version <= 5 ) or version < 5 ):
 		QtWidgets.QApplication.exec = QtWidgets.QApplication.exec_;
@@ -437,15 +439,17 @@ class Main(QtWidgets.QMainWindow):
 		else:
 			this.actionFind = QtWidgets.QShortcut( QtGui.QKeySequence.Find, this, this.openFind );
 		
-		this.findHide.clicked.connect(this.findWidget.hide);
+		this.findHide.clicked.connect(this.closeFind);
 		this.findText.textChanged.connect(lambda:this.find(begin=True))
 		this.findPrev.clicked.connect(lambda:this.find(prev=True, active=True));
 		this.findNext.clicked.connect(lambda:this.find(prev=False, active=True));
 		
-		this.findWidget.hide();
+		this.closeFind();
 		
 		this.cfgTextBrowser(this.messages);
 		this.cfgTextBrowser(this.scoresBrowser);
+		
+		this.toolBar.orientationChanged.connect( this.confTabs );
 		
 		
 		this.show();
@@ -471,9 +475,21 @@ class Main(QtWidgets.QMainWindow):
 		if( a == find ):
 			this.openFind();
 	
+	def confTabs(this):
+		this.tabs.setDocumentMode( 
+			this.toolBar.orientation() == Qt.Orientation.Horizontal and
+			this.findWidget.isHidden() and
+		1);
+	
 	def openFind(this):
 		this.findWidget.show();
 		this.findText.setFocus( Qt.FocusReason.Other );
+		this.findText.selectAll();
+		this.confTabs();
+	
+	def closeFind(this):
+		this.findWidget.hide();
+		this.confTabs();
 	
 	def find(this, begin=False, prev=False, active=False):
 		find = this.findText.text();
