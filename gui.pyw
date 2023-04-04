@@ -263,7 +263,7 @@ class Main(QtWidgets.QMainWindow):
 		fileInfo = QtWidgets.QFileDialog.getOpenFileName( this, "Load AAREC", "", str.join(";;", fileTypes) );
 		
 		if( fileInfo[0] ):
-			aarecLoadSafe( fileInfo );
+			this.aarecLoadSafe( fileInfo );
 	
 	def aarecLoadSafe(this, fileInfo):
 			if( this.thread ):
