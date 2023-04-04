@@ -731,6 +731,9 @@ class Worker(Qt.QObject):
 
 
 if(__name__ == "__main__"):
+	import signal;
+	signal.signal(signal.SIGINT, signal.SIG_DFL);
+	
 	app = QtWidgets.QApplication(sys.argv);
 	window = Main();
 	
