@@ -131,10 +131,14 @@ def main(argv):
 	startTime = time.time();
 	
 	if( showPercentage ):
-		print("Please wait...", end="", file=sys.stderr, flush=True);
+		def percPrint(*s):
+			sys.stderr.write(str.join( " ", [ str(i) for i in s ] ));
+			sys.stderr.flush();
+		
+		percPrint("Please wait...");
 		f.seek(-4096, 2); # there should be a time event somewhere in the last 4K bytes, surely
 		endTimeState = seekGetLastAARECTime(f).time;
-		print("\033[1K", end="\r", file=sys.stderr, flush=True);
+		percPrint("\033[1K\r");
 		f.seek(0);
 		stframe = 0;
 	
@@ -153,8 +157,8 @@ def main(argv):
 		if( showPercentage ):
 			stframe += 1;
 			if( stframe%10000 == 0 ):
-				print("\033[2K", end="", file=sys.stderr);
-				print(int(( 100 * state.time ) / endTimeState), "%", end="\r", file=sys.stderr, flush=True);
+				percPrint("\033[2K");
+				percPrint( int(( 100 * state.time ) / endTimeState), "%", "\r" );
 		#print(state)
 		
 		if( mode == _MODE_STATS ):
