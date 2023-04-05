@@ -196,7 +196,7 @@ def main(argv):
 					print( str.ljust("¯¯¯¯¯¯", 16), str.rjust("¯¯¯¯¯", 6), str.ljust("¯¯¯¯", 16), sep="  " );
 					for p in sorted(engine.players, key=lambda p:p.score, reverse=True):
 						if( p.team ):
-							print( str.ljust(p.name, 16), str(p.score).rjust(6), str.ljust(p.team.name, 16), sep="  " );
+							print( str.ljust(removeColors( p.name ), 16), str(p.score).rjust(6), str.ljust(removeColors( p.team.name ), 16), sep="  " );
 						else:
 							if( p.teamID ):
 								spectators.append(p.name+" (error)");
@@ -218,11 +218,11 @@ def main(argv):
 					jsonLines = json.dumps({
 						"winner": ( state.matchWinner and state.matchWinner.name ),
 						"teams": {
-							t.name: t.score
+							removeColors(t.name): t.score
 							for t in sorted(engine.teams, key=lambda t:t.score, reverse=True)
 						},
 						"players": {
-							p.name: {
+							removeColors(p.name): {
 								"score": p.score,
 								"team": (p.team and p.team.name)
 							}

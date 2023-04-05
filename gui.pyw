@@ -696,7 +696,8 @@ class Worker(Qt.QObject):
 					this.scoreRq.emit( 
 						state.time, 
 						state.obj.__class__.__name__, 
-						state.obj.name, state.obj.score,
+						removeColors( state.obj.name ),
+						state.obj.score,
 					);
 			
 			if( state.matchWinner ):
@@ -705,7 +706,7 @@ class Worker(Qt.QObject):
 					"time": state.time,
 					"teams": [
 						{
-							"name": t.name,
+							"name": removeColors( t.name ),
 							"score": t.score,
 							"numPlayers": sum( 1 for p in engine.players if p.teamID == t.id ),
 						}
@@ -713,7 +714,7 @@ class Worker(Qt.QObject):
 					],
 					"players": [
 						{
-							"name": p.name,
+							"name": removeColors( p.name ),
 							"score": p.score,
 							"team": (p.team and p.team.name),
 							"teamID": (p.teamID),
