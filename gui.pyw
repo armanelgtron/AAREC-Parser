@@ -70,6 +70,8 @@ def importPyQt(version=5,use_pyside=False):
 			if( len(x) != 0 ):
 				setattr( Qt.FocusReason, x[0], getattr(Qt.FocusReason, c) );
 		Qt.Orientation = Qt.Qt.Orientation;
+		for c in dict(QtGui.QTextDocument.FindFlag.__dict__):
+			setattr( QtGui.QTextDocument, c, getattr(QtGui.QTextDocument.FindFlag, c) );
 	
 	if( ( use_pyside and version <= 5 ) or version < 5 ):
 		QtWidgets.QApplication.exec = QtWidgets.QApplication.exec_;
@@ -552,7 +554,7 @@ class Main(QtWidgets.QMainWindow):
 				textBrowser.setTextCursor(cur);
 				worked = textBrowser.find( find, options );
 			if( active ):
-				textBrowser.setFocus( Qt.Qt.OtherFocusReason );
+				textBrowser.setFocus( Qt.FocusReason.Other );
 		
 		if( worked or ( this.findText.text() == "" ) ):
 			this.findText.setStyleSheet("");
